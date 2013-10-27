@@ -112,7 +112,12 @@ void QWurthScanner::deviceDataReceieved()
             while (receieveBuffer.length()) {
                 unsigned char codeLength = receieveBuffer.at(0);
                 if (receieveBuffer.length() >= codeLength+1) {
-                    readedBarcodes.append(receieveBuffer.mid(1, codeLength));
+                    /*
+                     * receieved barcode block's first character is the barcode type
+                     * A -> EAN
+                     * B -> RSS14?
+                     */
+                    readedBarcodes.append(receieveBuffer.mid(2, codeLength-1));
                     receieveBuffer = receieveBuffer.mid(codeLength+1);
                     barcodesToReceieve--;
                     if (barcodesToReceieve == 0) {
