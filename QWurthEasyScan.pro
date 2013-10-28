@@ -29,4 +29,20 @@ HEADERS  += mainwindow.h \
 
 FORMS    += mainwindow.ui \
     formabout.ui
-LIBS += -lQt5ExtSerialPort
+
+
+greaterThan(QT_MAJOR_VERSION, 4) {
+    LIBS += -lQt5ExtSerialPort
+} else {
+    LIBS += -lqextserialport
+}
+
+
+# for make install
+win32:{
+    target.path = C:\\Program\ Files\QWurthEasyScan
+} else:unix {
+    target.path = /usr/bin
+}
+
+INSTALLS += target
