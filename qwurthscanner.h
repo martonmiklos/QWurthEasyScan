@@ -43,6 +43,7 @@ public:
             return tr("Invalid command: %1").arg(type);
         }
     }
+    void rawQuery(QString data);
 
 signals:
     void deviceFound(QString deviceName);

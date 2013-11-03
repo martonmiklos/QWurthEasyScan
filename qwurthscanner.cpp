@@ -36,36 +36,27 @@ void QWurthScanner::setPortName(QString portName)
 
 void QWurthScanner::queryDevice()
 {
-    unsigned char dataRaw[4] = {0x1B, '@', 'I', 0x12};
-    QByteArray data;
-    data.setRawData((char*)dataRaw, 4);
-
-    createCommand(QueryDevice, data);
+    createCommand(QueryDevice, "@I");
 }
 
 void QWurthScanner::powerDownDevice()
 {
-    unsigned char dataRaw[4] = {0x1B, '@', 'P', 0x0B};
-    QByteArray data;
-    data.setRawData((char*)dataRaw, 4);
-
-    createCommand(PowerDownDevice, data);
+    createCommand(PowerDownDevice, "@P");
 }
 
 void QWurthScanner::readBarcodes()
 {
-    unsigned char dataRaw[4] = {0x1B, '@', 'U', 0x0E};
-    QByteArray data;
-    data.setRawData((char*)dataRaw, 4);
-    createCommand(ReadBarcodes, data);
+    createCommand(ReadBarcodes, "@U");
 }
 
 void QWurthScanner::clearBarcodes()
 {
-    unsigned char dataRaw[4] = {0x1B, '@', 'C', 0x18};
-    QByteArray data;
-    data.setRawData((char*)dataRaw, 4);
-    createCommand(ClearBarodes, data);
+    createCommand(ClearBarodes, "@C");
+}
+
+void QWurthScanner::rawQuery(QString data)
+{
+    createCommand(Idle, data.toLatin1());
 }
 
 void QWurthScanner::writeNextChar()
@@ -172,6 +163,8 @@ void QWurthScanner::deviceDataReceieved()
         break;
     case Idle:
         qWarning() << "data receieved in idle state...";
+        dumpData(receieveBuffer);
+        receieveBuffer.clear();
         break;
     }
 }
@@ -192,7 +185,7 @@ void QWurthScanner::dumpData(QByteArray data)
 {
     qWarning() << "DUMP";
     for (int i = 0; i<data.length(); i++) {
-        qWarning("%02x", (unsigned char)data[i]);
+        qWarning("%02x\t\t%c", (unsigned char)data[i], (unsigned char)data[i]);
     }
 }
 
@@ -200,11 +193,21 @@ void QWurthScanner::createCommand(CommandType type, QByteArray data)
 {
     Command cmd;
     cmd.data = data;
+    cmd.data.prepend(0x1B);
+    quint8 checksum = 0;
+    for (int i = 0; i<cmd.data.length(); i++) {
+        checksum ^= cmd.data.at(i);
+    }
+    cmd.data.append(checksum);
+
     cmd.type = type;
+
     commandsToSend.append(cmd);
 
     if (currentCommand.type == Idle) {
         startSendPackets();
     }
-    timeoutTimer.start(2000);
+
+    if (type != Idle)
+        timeoutTimer.start(2000);
 }
